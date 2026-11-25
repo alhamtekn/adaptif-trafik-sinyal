@@ -1,0 +1,4 @@
+<routes>
+    <!-- Ana yönde (batı->doğu) 1200-2400 sn arası ani talep artışı -->
+    <flow id="surge_WE" type="car" from="left0A0" to="C0right0" begin="1200" end="2400" period="exp(0.22)" departLane="best" departSpeed="max"/>
+</routes>

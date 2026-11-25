@@ -1,0 +1,16 @@
+<routes>
+    <vType id="car" accel="2.6" decel="4.5" sigma="0.5" length="5" maxSpeed="16.7"/>
+    <!-- period="exp(r)": Poisson gelişler, saniyede ortalama r araç. SEED bunu değiştirir. -->
+    <!-- Ana arter (doğu-batı) -->
+    <flow id="main_WE" type="car" from="left0A0"  to="C0right0" begin="0" end="3600" period="exp(0.17)" departLane="best" departSpeed="max"/>
+    <flow id="main_EW" type="car" from="right0C0" to="A0left0"  begin="0" end="3600" period="exp(0.15)" departLane="best" departSpeed="max"/>
+    <!-- Yan yollar (kuzey-güney) -->
+    <flow id="side_A_NS" type="car" from="top0A0"    to="A0bottom0" begin="0" end="3600" period="exp(0.04)" departLane="best"/>
+    <flow id="side_A_SN" type="car" from="bottom0A0" to="A0top0"    begin="0" end="3600" period="exp(0.04)" departLane="best"/>
+    <flow id="side_B_NS" type="car" from="top1B0"    to="B0bottom1" begin="0" end="3600" period="exp(0.05)" departLane="best"/>
+    <flow id="side_B_SN" type="car" from="bottom1B0" to="B0top1"    begin="0" end="3600" period="exp(0.05)" departLane="best"/>
+    <flow id="side_C_NS" type="car" from="top2C0"    to="C0bottom2" begin="0" end="3600" period="exp(0.04)" departLane="best"/>
+    <flow id="side_C_SN" type="car" from="bottom2C0" to="C0top2"    begin="0" end="3600" period="exp(0.04)" departLane="best"/>
+    <!-- Yan yoldan arter'e katılım -->
+    <flow id="join_B_E"  type="car" from="top1B0"    to="C0right0"  begin="0" end="3600" period="exp(0.03)" departLane="best"/>
+</routes>

@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+results/*
+!results/.gitkeep
+!results/summary_runs.csv
+!results/comparison.csv
+!results/fig_*.png
+sumo/net/map.osm.bak

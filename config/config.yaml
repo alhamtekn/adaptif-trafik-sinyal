@@ -1,0 +1,56 @@
+# Projenin tüm alan ayarları burada. Servis adresleri ve topic adları .env dosyasında.
+# Ağı değiştirdiğinizde (OSM'den gerçek konum) yalnızca bu dosyadaki sumo/tls/scenarios kısımlarını güncelleyin.
+
+sumo:
+  net_file: net/corridor.net.xml        # /sumo klasörüne göre
+  programs_file: net/tls_programs.add.xml
+  step_length: 1.0
+  # Ana arter (koridor) boyunca kavşaklara GİREN yollar.
+  # Hem plan üretici (ana yön fazı) hem bridge (queue_main / queue_side) bunu kullanır.
+  main_edges: [left0A0, B0A0, A0B0, C0B0, B0C0, right0C0]
+
+# Kısa ad -> SUMO tlLogic id. OSM ağında id'ler "cluster_..." gibi uzun olur; burada eşleyin.
+tls:
+  K1: A0
+  K2: B0
+  K3: C0
+
+# gen_tls_programs.py'nin ürettiği program adları
+programs:
+  normal: normal
+  main_priority: main_priority
+  side_priority: side_priority
+  shift_s: 15          # öncelikli planda ana fazdan diğerine aktarılan yeşil süresi (çevrim sabit kalır)
+  min_green_s: 10
+
+control:
+  # Yoğunluk düzeyi avg_queue (pencere içindeki ortalama duran araç sayısı) üzerinden belirlenir.
+  # Geçici test ağına göre ayarlandı (surge öncesi p90 ~9, surge sırasında medyan 9-12).
+  # Gerçek ağda normal senaryoyu koşup kuyruk dağılımına bakarak yeniden belirleyin.
+  thresholds:
+    medium_enter: 7
+    medium_exit: 5
+    high_enter: 11
+    high_exit: 8
+  n_consecutive: 3              # yüksek düzey kaç ardışık pencere sürerse plan değişir
+  min_control_interval_s: 90    # iki plan değişikliği arasındaki en kısa süre (simülasyon saniyesi)
+  plan_for_level:
+    low: normal
+    medium: normal
+    # high: kuyruğu büyük olan yöne göre main_priority / side_priority seçilir
+
+scenarios:
+  normal:
+    sumocfg: scenarios/normal.sumocfg
+    events: []
+  surge:              # ana yönde 1200-2400 sn arası ani talep artışı
+    sumocfg: scenarios/surge.sumocfg
+    events: []
+  side_surge:         # orta kavşakta yan yoldan yüksek katılım
+    sumocfg: scenarios/side_surge.sumocfg
+    events: []
+  lane_closure:       # normal talep + orta kesitte bir şerit kapanması
+    sumocfg: scenarios/normal.sumocfg
+    events:
+      - {time: 900,  action: close_lane, lane: B0C0_0}
+      - {time: 2700, action: open_lane,  lane: B0C0_0}

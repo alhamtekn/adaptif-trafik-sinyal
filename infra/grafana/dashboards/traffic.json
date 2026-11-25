@@ -1,0 +1,308 @@
+{
+  "uid": "traffic-adaptive",
+  "title": "Adaptif Trafik Sinyal Kontrolü",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Son pencere: ortalama kuyruk (araç)",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT tls_id, argMax(avg_queue, window_end) AS kuyruk FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' GROUP BY tls_id ORDER BY tls_id"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "textMode": "value_and_name"
+      },
+      "id": 1,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "type": "table",
+      "title": "Aktif sinyal planı",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT tls_id AS kavşak, argMax(active_program, window_end) AS plan, round(argMax(avg_queue_main, window_end),1) AS ana_kuyruk, round(argMax(avg_queue_side, window_end),1) AS yan_kuyruk FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' GROUP BY tls_id ORDER BY tls_id"
+        }
+      ],
+      "id": 2,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Uçtan uca gecikme (ms)",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT quantile(0.5)(latency_ms) AS p50, quantile(0.95)(latency_ms) AS p95, max(latency_ms) AS maks, count() AS komut FROM traffic.control_applied WHERE run_id = '${run}'"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "id": 3,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ortalama kuyruk uzunluğu (duran araç)",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT window_end AS time, avgIf(avg_queue, tls_id='K1') AS K1, avgIf(avg_queue, tls_id='K2') AS K2, avgIf(avg_queue, tls_id='K3') AS K3 FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' AND $__timeFilter(window_end) GROUP BY time ORDER BY time"
+        }
+      ],
+      "id": 4,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Araç başına ortalama bekleme (sn)",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT window_end AS time, avgIf(avg_wait, tls_id='K1') AS K1, avgIf(avg_wait, tls_id='K2') AS K2, avgIf(avg_wait, tls_id='K3') AS K3 FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' AND $__timeFilter(window_end) GROUP BY time ORDER BY time"
+        }
+      ],
+      "id": 5,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "type": "state-timeline",
+      "title": "Sinyal planı zaman çizelgesi",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT window_end AS time, anyIf(active_program, tls_id='K1') AS K1, anyIf(active_program, tls_id='K2') AS K2, anyIf(active_program, tls_id='K3') AS K3 FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' AND $__timeFilter(window_end) GROUP BY time ORDER BY time"
+        }
+      ],
+      "options": {
+        "showValue": "auto",
+        "mergeValues": true,
+        "rowHeight": 0.8
+      },
+      "id": 6,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 6
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ortalama hız (m/s)",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT window_end AS time, avgIf(avg_speed, tls_id='K1') AS K1, avgIf(avg_speed, tls_id='K2') AS K2, avgIf(avg_speed, tls_id='K3') AS K3 FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' AND $__timeFilter(window_end) GROUP BY time ORDER BY time"
+        }
+      ],
+      "id": 7,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "İşlenen kayıt / pencere",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT window_end AS time, sum(n_records) AS kayit FROM traffic.tls_metrics FINAL WHERE run_id = '${run}' AND $__timeFilter(window_end) GROUP BY time ORDER BY time"
+        }
+      ],
+      "id": 8,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "table",
+      "title": "Kontrol değişiklikleri",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse"
+          },
+          "refId": "A",
+          "editorType": "sql",
+          "format": 1,
+          "queryType": "table",
+          "rawSql": "SELECT decided_ts AS zaman, round(sim_time) AS sim_sn, tls_id AS kavşak, prev_program AS eski, program AS yeni, reason AS düzey, round(avg_queue,1) AS kuyruk FROM traffic.decisions WHERE run_id = '${run}' ORDER BY decided_at DESC LIMIT 100"
+        }
+      ],
+      "id": 9,
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 8
+      }
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "run",
+        "label": "Koşu",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "clickhouse"
+        },
+        "refresh": 1,
+        "query": "SELECT run_id FROM traffic.tls_metrics GROUP BY run_id ORDER BY max(window_end) DESC",
+        "definition": "SELECT run_id FROM traffic.tls_metrics GROUP BY run_id ORDER BY max(window_end) DESC"
+      }
+    ]
+  }
+}

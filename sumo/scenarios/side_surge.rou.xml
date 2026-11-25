@@ -1,0 +1,5 @@
+<routes>
+    <!-- Orta kavşakta (K2) yan yoldan yüksek katılım, 1200-2400 sn -->
+    <flow id="side_surge_B_NS" type="car" from="top1B0"    to="B0bottom1" begin="1200" end="2400" period="exp(0.12)" departLane="best"/>
+    <flow id="side_surge_B_SN" type="car" from="bottom1B0" to="B0top1"    begin="1200" end="2400" period="exp(0.12)" departLane="best"/>
+</routes>

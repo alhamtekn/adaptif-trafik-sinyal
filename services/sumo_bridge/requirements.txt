@@ -1,0 +1,5 @@
+eclipse-sumo==1.28.0
+traci==1.28.0
+sumolib==1.28.0
+confluent-kafka==2.6.1
+PyYAML==6.0.2
